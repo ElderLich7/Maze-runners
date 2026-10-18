@@ -52,6 +52,7 @@ class PlayerSprite(pygame.sprite.Sprite):
         self.last_direction = self.frames["idle"]
 
     def update_frame(self  , direction = "idle"):
+            self.cycle_index += 1
             if self.last_direction != direction:
                             self.cycle_index = 0
                             self.last_direction = direction
@@ -143,16 +144,16 @@ def main():
                 dx, dy = 0, 0
                 if event.key in (pygame.K_LEFT, pygame.K_a):     
                     dx = -1
-                    player.update_frame()
+                    player.update_frame("left")
                 elif event.key in (pygame.K_RIGHT, pygame.K_d):  
                     dx = 1
-                    player.update_frame()
+                    player.update_frame("right")
                 elif event.key in (pygame.K_UP, pygame.K_w):     
                     dy = -1
-                    player.update_frame()
+                    player.update_frame("up")
                 elif event.key in (pygame.K_DOWN, pygame.K_s):   
                     dy = 1
-                    player.update_frame()
+                    player.update_frame("down")
                 # Use internal sprite logic to evaluate moving into the matrix boundaries
                 player.move(dx, dy, maze)
                 
