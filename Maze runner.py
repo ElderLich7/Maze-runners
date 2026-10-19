@@ -4,22 +4,23 @@ import pygame
 
 from display_control import Settings
 from maze_gen import MazeGenerator
-from visual_control import WallSprite, PlayerSprite
+from visual_control import PlayerSprite
 from dungeon_gen import DungeonGenerator
 
 # --- WINDOW CONFIGURATION ---
 ai_settings = Settings()
 def main():
+
     ai_settings.create_display()
+    
     
     # Engine state setup
     maze_engine = MazeGenerator(ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
-    dungeon_engine = DungeonGenerator(ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
+    dungeon_engine = DungeonGenerator(ai_settings.MAZE_WIDTH , ai_settings.MAZE_HEIGHT )
 
     # Default to maze generation; can switch to dungeon_engine if desired
     engine = maze_engine  
-    current_difficulty = "medium"
-    maze =engine.generate(current_difficulty)
+    maze =engine.generate(ai_settings.current_difficulty)
 
     ai_settings.background(maze)
     
@@ -40,17 +41,31 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 
                 # Regenerate levels if configuration hotkeys are pressed
-                if event.key in (pygame.K_1, pygame.K_2, pygame.K_3 , pygame.K_5 , pygame.K_6):
-                    if event.key == pygame.K_1: current_difficulty = "easy"
-                    elif event.key == pygame.K_2: current_difficulty = "medium"
-                    elif event.key == pygame.K_3: current_difficulty = "hard"
-                    elif event.key == pygame.K_5: engine = dungeon_engine
-                    elif event.key == pygame.K_6: engine = maze_engine
+                if event.key in (pygame.K_1, pygame.K_2, pygame.K_3 , pygame.K_5 , pygame.K_6 ):
+                    if event.key == pygame.K_1: ai_settings.current_difficulty = "easy"
+                    elif event.key == pygame.K_2: ai_settings.current_difficulty = "medium"
+                    elif event.key == pygame.K_3: ai_settings.current_difficulty = "hard"
+                    elif event.key == pygame.K_5:
 
-                    maze = engine.generate(current_difficulty)
+                        engine ,ai_settings.mode = dungeon_engine , "dungeon"
+                        ai_settings.camera_type = 'player'
+                        ai_settings.camera_settings()
+                        player = PlayerSprite(1, 1, ai_settings.TILE_SIZE, ai_settings.COLOR_PLAYER)
+                        player.update_frame()
+                        ai_settings.all_sprites = pygame.sprite.Group(player)
+                        ai_settings.exit_x, ai_settings.exit_y = ai_settings.MAZE_WIDTH - 2, ai_settings.MAZE_HEIGHT - 2
+
+                    elif event.key == pygame.K_6:
+                        engine ,ai_settings.mode  = maze_engine , "maze"
+                        ai_settings.world_settings()
+                        ai_settings.camera_type = 'world'
+
+                    maze = engine.generate(ai_settings.current_difficulty)
                     ai_settings.background_surface, ai_settings.wall_group = ai_settings.build_level_cache(maze, ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
+                    
                     player.set_grid_position(1, 1)
                     player.update_frame()
+
 
         current_time = pygame.time.get_ticks()
 
@@ -80,7 +95,13 @@ def main():
                 # Reset the timer to lock out movement until the next cooldown window
                 player.last_move_time = current_time
 
-        ai_settings.draw_world_graphics(player ,engine , current_difficulty)
+        ai_settings.ui_hud()
+
+        if ai_settings.camera_type == "world":
+            ai_settings.world_pov(player , engine)
+
+        elif ai_settings.camera_type == "player":
+            ai_settings.camera_pov(player)
 
         ai_settings.clock.tick(60)
 
