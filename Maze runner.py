@@ -2,7 +2,7 @@ from email.mime import image
 import sys
 import pygame
 
-from settings import Settings
+from display_control import Settings
 from maze_gen import MazeGenerator
 from visual_control import WallSprite, PlayerSprite
 from dungeon_gen import DungeonGenerator
@@ -10,11 +10,7 @@ from dungeon_gen import DungeonGenerator
 # --- WINDOW CONFIGURATION ---
 ai_settings = Settings()
 def main():
-    pygame.init()
-    screen = pygame.display.set_mode((ai_settings.SCREEN_WIDTH, ai_settings.SCREEN_HEIGHT))
-    pygame.display.set_caption("Procedural Sprite Maze Playground")
-    clock = pygame.time.Clock()
-    font = pygame.font.SysFont("Arial", 16, bold=True)
+    ai_settings.create_display()
     
     # Engine state setup
     maze_engine = MazeGenerator(ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
@@ -24,17 +20,16 @@ def main():
     engine = maze_engine  
     current_difficulty = "medium"
     maze =engine.generate(current_difficulty)
-    
-    # Bake current maze into graphic assets
-    background_surface, wall_group = ai_settings.build_level_cache(maze, ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
+
+    ai_settings.background(maze)
     
     # Initialize Player Sprite
     player = PlayerSprite(1, 1, ai_settings.TILE_SIZE, ai_settings.COLOR_PLAYER)
     player.update_frame()
-    all_sprites = pygame.sprite.Group(player)
+    ai_settings.all_sprites = pygame.sprite.Group(player)
     
     # Static goal markers
-    exit_x, exit_y = ai_settings.MAZE_WIDTH - 2, ai_settings.MAZE_HEIGHT - 2
+    ai_settings.exit_x, ai_settings.exit_y = ai_settings.MAZE_WIDTH - 2, ai_settings.MAZE_HEIGHT - 2
 
     while True:
         for event in pygame.event.get():
@@ -53,7 +48,7 @@ def main():
                     elif event.key == pygame.K_6: engine = maze_engine
 
                     maze = engine.generate(current_difficulty)
-                    background_surface, wall_group = ai_settings.build_level_cache(maze, ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
+                    ai_settings.background_surface, ai_settings.wall_group = ai_settings.build_level_cache(maze, ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
                     player.set_grid_position(1, 1)
                     player.update_frame()
 
@@ -85,34 +80,9 @@ def main():
                 # Reset the timer to lock out movement until the next cooldown window
                 player.last_move_time = current_time
 
-        # Win condition evaluation
-        if player.grid_x == exit_x and player.grid_y == exit_y:
-            maze = engine.generate(current_difficulty)
-            background_surface, wall_group = ai_settings.build_level_cache(maze, ai_settings.MAZE_WIDTH, ai_settings.   MAZE_HEIGHT)
-            player.set_grid_position(1, 1)
-            player.update_frame()
+        ai_settings.draw_world_graphics(player ,engine , current_difficulty)
 
-        # SCREEN DRAWING SEQUENCE
-        screen.fill((30, 30, 30))
-        
-        # Step 1: Blit the entire pre-baked structural grid instantly 
-        screen.blit(background_surface, (0, 0))
-        
-        # Step 2: Draw target markers
-        pygame.draw.rect(screen, ai_settings.COLOR_EXIT, (exit_x * ai_settings.TILE_SIZE, exit_y * ai_settings.TILE_SIZE, ai_settings.TILE_SIZE, ai_settings.TILE_SIZE))
-        
-        # Step 3: Draw interactive active moving sprite elements
-        all_sprites.draw(screen)
-
-        # Step 4: Render UI/HUD text
-        hud_surface = font.render(
-            f"Difficulty: {current_difficulty.upper()}   |   Regen: Easy(1) Med(2) Hard(3)   |   Move: WASD/Arrows", 
-            True, ai_settings.COLOR_TEXT
-        )
-        screen.blit(hud_surface, (12, ai_settings.MAZE_HEIGHT * ai_settings.TILE_SIZE + 10))
-
-        pygame.display.flip()
-        clock.tick(60)
+        ai_settings.clock.tick(60)
 
 if __name__ == "__main__":
     main()
