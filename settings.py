@@ -15,6 +15,7 @@ class Settings ():
         self.COLOR_PLAYER = (46, 204, 113)    
         self.COLOR_EXIT = (231, 76, 60)       
         self.COLOR_TEXT = (255, 255, 255)
+        # Speed setting: How many milliseconds must pass between steps (Lower = Faster)
 
     def build_level_cache(self,matrix, engine_width, engine_height):
         """Creates wall sprites and bakes them to a flat texture canvas for massive performance gains."""

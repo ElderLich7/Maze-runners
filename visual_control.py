@@ -20,6 +20,11 @@ class PlayerSprite(pygame.sprite.Sprite):
         self.grid_y = grid_y
         original_image = pygame.image.load("sprite player.png").convert_alpha()
         
+        #cool down for player movement
+        self.MOVE_COOLDOWN = 200  
+        # Tracker for when the player last moved
+        self.last_move_time = 0 
+        
         
         #size of the spriterelative to png image
         frame_width = 45

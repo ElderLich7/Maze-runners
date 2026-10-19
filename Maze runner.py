@@ -43,21 +43,6 @@ def main():
                 sys.exit()
                 
             elif event.type == pygame.KEYDOWN:
-                dx, dy = 0, 0
-                if event.key in (pygame.K_LEFT, pygame.K_a):     
-                    dx = -1
-                    player.update_frame("left")
-                elif event.key in (pygame.K_RIGHT, pygame.K_d):  
-                    dx = 1
-                    player.update_frame("right")
-                elif event.key in (pygame.K_UP, pygame.K_w):     
-                    dy = -1
-                    player.update_frame("up")
-                elif event.key in (pygame.K_DOWN, pygame.K_s):   
-                    dy = 1
-                    player.update_frame("down")
-                # Use internal sprite logic to evaluate moving into the matrix boundaries
-                player.move(dx, dy, maze)
                 
                 # Regenerate levels if configuration hotkeys are pressed
                 if event.key in (pygame.K_1, pygame.K_2, pygame.K_3 , pygame.K_5 , pygame.K_6):
@@ -71,6 +56,34 @@ def main():
                     background_surface, wall_group = ai_settings.build_level_cache(maze, ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
                     player.set_grid_position(1, 1)
                     player.update_frame()
+
+        current_time = pygame.time.get_ticks()
+
+        keys = pygame.key.get_pressed()
+        dx, dy = 0, 0
+
+        # ONLY process movement if the cooldown period has ended
+        if current_time - player.last_move_time >= player.MOVE_COOLDOWN:
+    
+            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+                dx, dy = -1, 0
+                player.update_frame("left")
+            elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                dx, dy = 1, 0
+                player.update_frame("right")
+            elif keys[pygame.K_UP] or keys[pygame.K_w]:
+                dx, dy = 0, -1
+                player.update_frame("up")
+            elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                dx, dy = 0, 1
+                player.update_frame("down")
+
+            # If the player is actively pressing a key and trying to move
+            if dx != 0 or dy != 0:
+                player.move(dx, dy, maze)
+        
+                # Reset the timer to lock out movement until the next cooldown window
+                player.last_move_time = current_time
 
         # Win condition evaluation
         if player.grid_x == exit_x and player.grid_y == exit_y:
