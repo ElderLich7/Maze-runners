@@ -16,13 +16,15 @@ class MazeGenerator:
         
         # Disjoint Set Init
         parent = {(x, y): (x, y) for x in range(grid_w) for y in range(grid_h)}
-        
+
+        # Disjoint Set Find and Union Functions
         def find(cell):
             if parent[cell] == cell:
                 return cell
             parent[cell] = find(parent[cell])
             return parent[cell]
 
+        # Disjoint Set Union Function
         def union(cell1, cell2):
             root1 = find(cell1)
             root2 = find(cell2)
@@ -43,7 +45,7 @@ class MazeGenerator:
         # Apply Difficulty Tuning
         if difficulty == "hard":
             # Wavy sorting patterns yield deeply winding corridors and far fewer branches
-            walls.sort(key=lambda w: (w[0][0] + w[0][1]) % 3 + random.random())
+            walls.sort(key=lambda w: (w[0][0] + w[0][1]) % 4 + random.random())
         else:
             random.shuffle(walls)
 

@@ -5,6 +5,7 @@ import pygame
 from settings import Settings
 from maze_gen import MazeGenerator
 from visual_control import WallSprite, PlayerSprite
+from dungeon_gen import DungeonGenerator
 
 # --- WINDOW CONFIGURATION ---
 ai_settings = Settings()
@@ -16,9 +17,13 @@ def main():
     font = pygame.font.SysFont("Arial", 16, bold=True)
     
     # Engine state setup
-    engine = MazeGenerator(ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
+    maze_engine = MazeGenerator(ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
+    dungeon_engine = DungeonGenerator(ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
+
+    # Default to maze generation; can switch to dungeon_engine if desired
+    engine = maze_engine  
     current_difficulty = "medium"
-    maze = engine.generate(current_difficulty)
+    maze =engine.generate(current_difficulty)
     
     # Bake current maze into graphic assets
     background_surface, wall_group = ai_settings.build_level_cache(maze, ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
@@ -55,11 +60,12 @@ def main():
                 player.move(dx, dy, maze)
                 
                 # Regenerate levels if configuration hotkeys are pressed
-                if event.key in (pygame.K_1, pygame.K_2, pygame.K_3 ):
+                if event.key in (pygame.K_1, pygame.K_2, pygame.K_3 , pygame.K_5 , pygame.K_6):
                     if event.key == pygame.K_1: current_difficulty = "easy"
                     elif event.key == pygame.K_2: current_difficulty = "medium"
                     elif event.key == pygame.K_3: current_difficulty = "hard"
-                        
+                    elif event.key == pygame.K_5: engine = dungeon_engine
+                    elif event.key == pygame.K_6: engine = maze_engine
 
                     maze = engine.generate(current_difficulty)
                     background_surface, wall_group = ai_settings.build_level_cache(maze, ai_settings.MAZE_WIDTH, ai_settings.MAZE_HEIGHT)
