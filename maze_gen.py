@@ -8,8 +8,9 @@ class MazeGenerator:
         # Force dimensions to be odd numbers for a perfect block-wall alignment
         self.width = width if width % 2 != 0 else width + 1
         self.height = height if height % 2 != 0 else height + 1
+        self.hard_complexity_range = [ 2 , 3 , 4 , 5 ,6]
         
-    def generate(self, difficulty="medium"):
+    def generate(self, difficulty="medium" , complexity = 3):
         # Grid dimensions for the underlying mathematical Kruskal cells
         grid_w = self.width // 2
         grid_h = self.height // 2
@@ -45,7 +46,7 @@ class MazeGenerator:
         # Apply Difficulty Tuning
         if difficulty == "hard":
             # Wavy sorting patterns yield deeply winding corridors and far fewer branches
-            walls.sort(key=lambda w: (w[0][0] + w[0][1]) % 4 + random.random())
+            walls.sort(key=lambda w: (w[0][0] + w[0][1]) % self.hard_complexity_range[complexity] + random.random())
         else:
             random.shuffle(walls)
 

@@ -3,46 +3,84 @@ import pygame
 
 from visual_control import WallSprite, PlayerSprite
 
+#stores display and screen settings and manages displayy presets
 class Settings ():
-
+    '''Manages display and screen settings, handles rendering, and provides utility methods for the maze game using pygame.'''
     def __init__(self):
-        self.TILE_SIZE = 25
-        self.MAZE_WIDTH = 43   
-        self.MAZE_HEIGHT = 29  
-        self.SCREEN_WIDTH = self.MAZE_WIDTH * self.TILE_SIZE
+        """
+        Initialize the Settings object with default display, maze, and color parameters.
+
+        Attributes:
+            TILE_SIZE (int): Size of one tile in the game.
+            MAZE_WIDTH (int): Width of the maze in tiles.
+            MAZE_HEIGHT (int): Height of the maze in tiles.
+            SCREEN_WIDTH (int): Width of the game screen in pixels.
+            SCREEN_HEIGHT (int): Height of the game screen in pixels.
+            COLOR_WALL (tuple): RGB color for walls.
+            COLOR_PATH (tuple): RGB color for paths.
+            COLOR_PLAYER (tuple): RGB color for the player.
+            COLOR_EXIT (tuple): RGB color for the exit.
+            COLOR_TEXT (tuple): RGB color for text.
+            current_difficulty (str): Current maze difficulty.
+            mode (str): Current game mode.
+            dungeon_level (int): Current dungeon level.
+            exit_x (int): X-coordinate of the maze exit.
+            exit_y (int): Y-coordinate of the maze exit.
+            camera_type (str): Camera view type ("world" or "player").
+        """
+
+        self.TILE_SIZE = 25                                         #size of 1 tile in game e.g player / wall
+        self.MAZE_WIDTH = 43                                        
+        self.MAZE_HEIGHT = 29   
+        self.SCREEN_WIDTH = self.MAZE_WIDTH * self.TILE_SIZE           
         self.SCREEN_HEIGHT = (self.MAZE_HEIGHT * self.TILE_SIZE) + 40 
         self.COLOR_WALL = (44, 62, 80)       
         self.COLOR_PATH = (236, 240, 241)     
         self.COLOR_PLAYER = (46, 204, 113)    
         self.COLOR_EXIT = (231, 76, 60)       
         self.COLOR_TEXT = (255, 255, 255)
-        self.current_difficulty = "easy"
-        self.mode =  "maze"
 
-        #the exit point of the map
+        self.current_difficulty = "easy"                            #maze difficulty
+        self.mode =  "maze"                                         #game mode currently loaded
+        self.dungeon_level = 1
+
+        #the exit coordinates of the map
         self.exit_x = 0
         self.exit_y = 0
-        self.camera_type = "world"
+        self.camera_type = "world"                                  #game view seen : "world" see entire maze displayed , "player" camera fixed and zoomed in on player
+
+        # Runtime resources are initialized when the display and maze are created.
+        self.screen = None
+        self.clock = None
+        self.font = None
+        self.hud_surface = None
+        self.background_surface = None
+        self.wall_group = pygame.sprite.Group()
+        self.all_sprites = pygame.sprite.Group()
 
 
-    #creates the initial display and screen and properties 
     def create_display(self):
+        """Initialize the pygame display, set the screen caption, and store the clock and font for rendering."""
         pygame.init()
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
         pygame.display.set_caption("Procedural Sprite Maze Playground")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("Arial", 16, bold=True)
 
-    #creates the background of the pygame screen
     def background(self ,maze ):
+        """creates the background of the pygame screen"""
         # Bake current maze into graphic assets
         self.background_surface, self.wall_group = self.build_level_cache(maze, self.MAZE_WIDTH, self.MAZE_HEIGHT)
 
     def ui_hud(self):
-         self.hud_surface = self.font.render(f"Difficulty: {self.current_difficulty.upper()}    Mode: {self.mode.upper()}   |   Regen: Easy(1) Med(2) Hard(3)    |    Move: WASD/Arrows     |    Mode:  Dungeon(5) Maze(6) ", True, self.COLOR_TEXT  )
+        """ handles the ui drawn onto the screen """
+        if self.mode == "maze":
+            self.hud_surface = self.font.render(f"Difficulty: {self.current_difficulty.upper()}    Mode: {self.mode.upper()}   |   Regen: Easy(1) Med(2) Hard(3)    |    Move: WASD/Arrows     |    Mode:  Dungeon(5) Maze(6) ", True, self.COLOR_TEXT  )
+        elif self.mode == "dungeon":
+            self.hud_surface = self.font.render(f"Difficulty: {self.current_difficulty.upper()}    Mode: {self.mode.upper()}   |   Regen: Easy(1) Med(2) Hard(3)    |    Move: WASD/Arrows     |    Mode:  Dungeon(5) Maze(6) ", True, self.COLOR_TEXT  )
+    
          
 
-    #handles building of world and level for better optimization
     def build_level_cache(self,matrix, engine_width, engine_height):
         """Creates wall sprites and bakes them to a flat texture canvas for massive performance gains."""
 
@@ -65,8 +103,8 @@ class Settings ():
     
         return bg_surface, wall_group
 
-    #alters the current system to now use camera pov
     def camera_settings(self):
+        ''''''
         self.TILE_SIZE = 35
         self.VIEW_WIDTH = 1200
         self.VIEW_HEIGHT = 900
@@ -108,8 +146,6 @@ class Settings ():
                 pygame.display.flip()
 
     def camera_pov (self , player ):
-
-
          # Center the camera on the player, then keep it inside the maze.
         world_width = self.MAZE_WIDTH * self.TILE_SIZE
         world_height = self.MAZE_HEIGHT * self.TILE_SIZE

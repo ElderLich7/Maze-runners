@@ -21,7 +21,7 @@ class PlayerSprite(pygame.sprite.Sprite):
         original_image = pygame.image.load("sprite player.png").convert_alpha()
         
         #cool down for player movement
-        self.MOVE_COOLDOWN = 200  
+        self.MOVE_COOLDOWN = 150  
         # Tracker for when the player last moved
         self.last_move_time = 0 
         

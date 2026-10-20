@@ -5,8 +5,9 @@ class DungeonGenerator:
         # Force dimensions to be odd numbers for perfect block-wall alignment
         self.width = width if width % 2 != 0 else width + 1
         self.height = height if height % 2 != 0 else height + 1
+        self.hard_complexity = 4   # closer to 1 means fewer paths and longer hallway , closer to 6 more branching paths shorter hallway
 
-    def generate(self, difficulty="medium", num_rooms=5, min_size=3, max_size=7):
+    def generate(self, difficulty , num_rooms , min_size , max_size  ):
         # Grid dimensions for the underlying mathematical Kruskal cells
         grid_w = self.width // 2
         grid_h = self.height // 2
@@ -35,6 +36,8 @@ class DungeonGenerator:
         # Step 2: Generate and Carve Rectangular Rooms
         # Rooms use odd coordinate placements to perfectly align with Kruskal nodes
         rooms = []
+        room_by_cell = {}
+        room_entrances = []
         for _ in range(num_rooms):
             # Ensure widths and heights are odd so they align cleanly with your tile grid step
             rw = random.randrange(min_size, max_size + 1, 2)
@@ -51,22 +54,30 @@ class DungeonGenerator:
             
             if not overlap:
                 rooms.append((rx, ry, rw, rh))
-                # Carve the room out of the matrix
-                for x in range(rx, rx + rw):
-                    for y in range(ry, rh + ry):
+                room_index = len(rooms) - 1
+                room_entrances.append(0)
+                # Pre-union the Kruskal cells whose centers lie inside this room.
+                room_cells = [
+                    (cx, cy)
+                    for cx in range(grid_w)
+                    for cy in range(grid_h)
+                    if rx <= 2 * cx + 1 < rx + rw
+                    and ry <= 2 * cy + 1 < ry + rh
+                ]
+                first_cell = room_cells[0]
+                room_left = 2 * min(cx for cx, _ in room_cells) + 1
+                room_right = 2 * max(cx for cx, _ in room_cells) + 1
+                room_top = 2 * min(cy for _, cy in room_cells) + 1
+                room_bottom = 2 * max(cy for _, cy in room_cells) + 1
+
+                # Clear the room interior, but keep its outside boundary walls intact.
+                for x in range(room_left, room_right + 1):
+                    for y in range(room_top, room_bottom + 1):
                         matrix[y][x] = 0
 
-                # Step 3: Pre-Union all mathematical Kruskal cells trapped inside this room
-                # Maps pixel space (rx, ry) back into Kruskal cell space (cx, cy)
-                cell_min_x = rx // 2
-                cell_max_x = (rx + rw - 1) // 2
-                cell_min_y = ry // 2
-                cell_max_y = (ry + rh - 1) // 2
-
-                first_cell = (cell_min_x, cell_min_y)
-                for cx in range(cell_min_x, cell_max_x + 1):
-                    for cy in range(cell_min_y, cell_max_y + 1):
-                        union(first_cell, (cx, cy))
+                for cell in room_cells:
+                    room_by_cell[cell] = room_index
+                    union(first_cell, cell)
 
         # Gather all internal walls (Your original code)
         walls = []
@@ -79,17 +90,31 @@ class DungeonGenerator:
 
         # Apply Difficulty Tuning (Your original code)
         if difficulty == "hard":
-            walls.sort(key=lambda w: (w[0][0] + w[0][1]) % 4 + random.random())
+            walls.sort(key=lambda w: (w[0][0] + w[0][1]) % self.hard_complexity + random.random())
         else:
             random.shuffle(walls)
 
         maze_passages = []
         remaining_walls = []
 
+        def doorway_rooms(cell1, cell2):
+            room1 = room_by_cell.get(cell1)
+            room2 = room_by_cell.get(cell2)
+            if room1 == room2:
+                return ()
+            return tuple(room for room in (room1, room2) if room is not None)
+
         # Core Kruskal Evaluation (Your original code)
         for cell1, cell2 in walls:
+            connected_rooms = doorway_rooms(cell1, cell2)
+            if any(room_entrances[room] >= 2 for room in connected_rooms):
+                remaining_walls.append((cell1, cell2))
+                continue
+
             if union(cell1, cell2):
                 maze_passages.append((cell1, cell2))
+                for room in connected_rooms:
+                    room_entrances[room] += 1
             else:
                 remaining_walls.append((cell1, cell2))
 
@@ -97,8 +122,17 @@ class DungeonGenerator:
         if difficulty == "easy":
             extra_openings = int(len(remaining_walls) * 0.25)
             random.shuffle(remaining_walls)
-            for i in range(min(extra_openings, len(remaining_walls))):
-                maze_passages.append(remaining_walls[i])
+            added_openings = 0
+            for cell1, cell2 in remaining_walls:
+                if added_openings >= extra_openings:
+                    break
+                connected_rooms = doorway_rooms(cell1, cell2)
+                if any(room_entrances[room] >= 2 for room in connected_rooms):
+                    continue
+                maze_passages.append((cell1, cell2))
+                for room in connected_rooms:
+                    room_entrances[room] += 1
+                added_openings += 1
 
         # Open up standard nodes (Your original code)
         for x in range(grid_w):
