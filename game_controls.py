@@ -15,27 +15,23 @@ class Controller():
             
     def movement_controls(self , keys ,player , current_time , maze , dx , dy ):
         # ONLY process movement if the cooldown period has ended
-        if current_time - player.last_move_time >= player.MOVE_COOLDOWN:
+        if not player.is_moving and current_time - player.last_move_time >= player.MOVE_COOLDOWN:
             if keys[pygame.K_LEFT] or keys[pygame.K_a] or keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                 if keys[pygame.K_LEFT] or keys[pygame.K_a]:
                     dx = -1
-                    player.update_frame("left")
                 elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                     dx = 1
-                    player.update_frame("right")
+                dy = 0
 
             if keys[pygame.K_UP] or keys[pygame.K_w] or keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 if keys[pygame.K_UP] or keys[pygame.K_w]:
                     dy =  -1
-                    player.update_frame("up")
                 elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
                     dy = 1
-                    player.update_frame("down")
+                dx = 0
         
             # If the player is actively pressing a key and trying to move
             if dx != 0 or dy != 0:
-                player.move(dx, dy, maze)
-                
-            # Reset the timer to lock out movement until the next cooldown window
-                player.last_move_time = current_time
+                if player.move(dx, dy, maze, current_time):
+                    player.last_move_time = current_time
         
