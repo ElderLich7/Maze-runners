@@ -146,7 +146,7 @@ class Settings ():
         # Win condition evaluation
                 if player.grid_x == self.exit_x and player.grid_y == self.exit_y:
                     self.maze = self.engine.generate(self.current_difficulty)
-                    self.background_surface, self.wall_group = self.build_level_cache(self.maze, self.MAZE_WIDTH, self.   MAZE_HEIGHT)
+                    self.background_surface, self.wall_group = self.build_level_cache(self.maze, self.MAZE_WIDTH, self.MAZE_HEIGHT , self.TILE_SIZE)
                     player.set_grid_position(1, 1)
                     player.update_frame()
         

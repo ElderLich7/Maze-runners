@@ -19,7 +19,7 @@ class NPC(pygame.sprite.Sprite , ExploringRandomWalk ):
         self.grid_x = grid_x
         self.grid_y = grid_y
         #cool down for player movement
-        self.MOVE_COOLDOWN = 600  
+        self.MOVE_COOLDOWN = 1500  
         # Tracker for when the player last moved
         self.last_move_time = 0 
         self.creature = creature
@@ -108,7 +108,7 @@ class NPC(pygame.sprite.Sprite , ExploringRandomWalk ):
             self.is_moving = False
 
 
-    def explore_maze(self , maze , height , width): 
+    def explore_maze(self , maze , height , width , obstacles ): 
         # Relative movements: Up, Down, Left, Right
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
@@ -124,7 +124,7 @@ class NPC(pygame.sprite.Sprite , ExploringRandomWalk ):
             next_x, next_y = current[0] + dx, current[1] + dy
             
             # Condition: Inside boundaries AND not a wall AND not visited yet
-            if (0 <= next_x < width and 0 <= next_y < height and maze[next_y][ next_x] == 0 and (next_x, next_y) not in self.visited):
+            if (0 <= next_x < width and 0 <= next_y < height and maze[next_y][ next_x] == 0 and (next_x, next_y) not in self.visited and (next_x,next_x) not in obstacles.values()):
                     valid_moves.append((next_x, next_y))
 
         if valid_moves:

@@ -37,6 +37,9 @@ class DungeonGenerator:
         rooms = []
         room_by_cell = {}
         room_entrances = []
+
+        room_library = {}
+
         for _ in range(num_rooms):
             # Ensure widths and heights are odd so they align cleanly with your tile grid step
             rw = random.randrange(min_size, max_size + 1, 2)
@@ -73,6 +76,8 @@ class DungeonGenerator:
                 for x in range(room_left, room_right + 1):
                     for y in range(room_top, room_bottom + 1):
                         matrix[y][x] = 0
+                        room_library.setdefault(rooms[room_index], []).append(( x , y ))
+
 
                 for cell in room_cells:
                     room_by_cell[cell] = room_index
@@ -152,7 +157,7 @@ class DungeonGenerator:
         matrix[self.height - 2][self.width - 2] = 0
 
         print(rooms )
-        print(room_by_cell)
+        print(room_library)
 
         return matrix
     

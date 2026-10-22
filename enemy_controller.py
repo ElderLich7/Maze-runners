@@ -46,7 +46,8 @@ class EnenmyAI():
     def enemy_movement(self , current_time , maze , height , width ):
         for enemy in self.enemy_group:
             if not enemy.is_moving and current_time - enemy.last_move_time >= enemy.MOVE_COOLDOWN:
-                dx , dy = enemy. explore_maze( maze , height , width)
+                dx , dy = enemy. explore_maze( maze , height , width, self.enemy_positions)
+                self.enemy_positions[enemy.creature_id] = enemy.path_taken[-1]
                 if dx != 0 or dy != 0:
                     if enemy.move(dx, dy, maze, current_time):
                         enemy.last_move_time = current_time

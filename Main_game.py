@@ -15,6 +15,7 @@ ai_settings = Settings()
 def main():
 
     ai_settings.create_display()
+
     
     
     # Engine state setup
@@ -36,6 +37,7 @@ def main():
     game_controls = Controller()
 
     enemy_frames = EnemySprites(ai_settings.D_TILE_SIZE)
+    NUM_ENEMIES = 8
 
     while True:
         for event in pygame.event.get():
@@ -52,7 +54,7 @@ def main():
                     else :
                         game_controls.maze_controls( event , ai_settings )
                         ai_settings.maze = ai_settings.dungeon_engine.generate(ai_settings.current_difficulty, ai_settings.ROOM_ATTEMPTS , ai_settings.MIN_ROOM_SIZE , ai_settings.MAX_ROOM_SIZE )
-                        enemies = EnenmyAI( 2 , ai_settings.D_TILE_SIZE ,enemy_frames )
+                        enemies = EnenmyAI( NUM_ENEMIES , ai_settings.D_TILE_SIZE ,enemy_frames )
                         enemies.pick_initial_enemy_positions(ai_settings.maze)
                         ai_settings.enemies = enemies.enemy_group
 
@@ -61,7 +63,7 @@ def main():
 
                         ai_settings.set_dungeon_camera_mode()
                         player = PlayerSprite(1, 1, ai_settings.D_TILE_SIZE , ai_settings.mode )
-                        enemies = EnenmyAI( 2 , ai_settings.D_TILE_SIZE ,enemy_frames )
+                        enemies = EnenmyAI( NUM_ENEMIES , ai_settings.D_TILE_SIZE ,enemy_frames )
                         enemies.pick_initial_enemy_positions(ai_settings.maze)
                         ai_settings.enemies = enemies.enemy_group
                         player.update_frame()
