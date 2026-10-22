@@ -1,7 +1,10 @@
 import sys 
 import pygame
 
-from player_walls_sprites import WallSprite, PlayerSprite
+from player_walls_sprites import WallSprite
+from dungeon_gen import DungeonGenerator
+from maze_gen import MazeGenerator
+from enemy_generator import NPC
 
 #stores display and screen settings and manages displayy presets
 class Settings ():
@@ -43,6 +46,23 @@ class Settings ():
         self.mode =  "maze"                                         #game mode currently loaded
         self.dungeon_level = 1
 
+        # dungeon settings
+        self.D_MAZE_WIDTH = 43                                        
+        self.D_MAZE_HEIGHT = 29 
+        self.VIEW_WIDTH = 1200
+        self.VIEW_HEIGHT = 900
+        self.HUD_HEIGHT = 40
+        self.D_TILE_SIZE = 45
+        self.D_SCREEN_WIDTH = self.VIEW_WIDTH
+        self.D_SCREEN_HEIGHT = self.VIEW_HEIGHT + self.HUD_HEIGHT
+        self.ROOM_ATTEMPTS = 3
+        self.MIN_ROOM_SIZE = 3
+        self.MAX_ROOM_SIZE = 6
+
+        self.maze_engine = MazeGenerator(self.MAZE_WIDTH, self.MAZE_HEIGHT)
+        self.dungeon_engine = DungeonGenerator(self.D_MAZE_WIDTH , self.D_MAZE_HEIGHT )
+        
+        self.engine = self.maze_engine
         #the exit coordinates of the map
         self.exit_x = 0
         self.exit_y = 0
@@ -55,9 +75,9 @@ class Settings ():
         self.hud_surface = None
         self.background_surface = None
         self.wall_group = pygame.sprite.Group()
+        self.enemies = pygame.sprite.Group()
         self.all_sprites = pygame.sprite.Group()
         self.maze = None
-        self.engine = None
 
 
     def create_display(self):
@@ -71,7 +91,7 @@ class Settings ():
     def set_background(self ):
         """creates the background of the pygame screen"""
         # Bake current maze into graphic assets
-        self.background_surface, self.wall_group = self.build_level_cache(self.maze, self.MAZE_WIDTH, self.MAZE_HEIGHT)
+        self.background_surface, self.wall_group = self.build_level_cache(self.maze, self.MAZE_WIDTH, self.MAZE_HEIGHT , self.TILE_SIZE )
 
     def ui_hud(self):
         """ handles the ui drawn onto the screen """
@@ -82,7 +102,7 @@ class Settings ():
     
          
 
-    def build_level_cache(self,matrix, engine_width, engine_height):
+    def build_level_cache(self,matrix, engine_width, engine_height , tile_siz ):
         """Creates wall sprites and bakes them to a flat texture canvas for massive performance gains."""
 
         wall_group = pygame.sprite.Group()
@@ -91,36 +111,35 @@ class Settings ():
         for row_idx, row in enumerate(matrix):
             for col_idx, value in enumerate(row):
                 if value == 1:
-                    wall_sprite = WallSprite(col_idx, row_idx, self.TILE_SIZE, self.COLOR_WALL)
+                    wall_sprite = WallSprite(col_idx, row_idx, tile_siz, self.COLOR_WALL)
                     wall_group.add(wall_sprite)
                 
         # Bake the sprites permanently to a background plane texture
         if self.camera_type == "world":
-            bg_surface = pygame.Surface((self.SCREEN_WIDTH, self.MAZE_HEIGHT * self.TILE_SIZE))
+            bg_surface = pygame.Surface((self.SCREEN_WIDTH, self.MAZE_HEIGHT * tile_siz))
         else :
-            bg_surface = pygame.Surface((engine_width * self.TILE_SIZE,engine_height * self.TILE_SIZE,))
+            bg_surface = pygame.Surface((engine_width * tile_siz ,engine_height * tile_siz,))
         bg_surface.fill(self.COLOR_PATH) # Default everything to walkable open ground paths
         wall_group.draw(bg_surface) # Stamp the structural wall images right on top
     
         return bg_surface, wall_group
 
-    def camera_settings(self):
-        ''''''
-        self.TILE_SIZE = 45
-        self.VIEW_WIDTH = 1200
-        self.VIEW_HEIGHT = 900
-        self.HUD_HEIGHT = 40
-        self.SCREEN_WIDTH = self.VIEW_WIDTH
-        self.SCREEN_HEIGHT = self.VIEW_HEIGHT + self.HUD_HEIGHT
-        self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
+    def set_dungeon_camera_mode(self):
+        self.camera_type = 'player'
+        self.mode = "dungeon"
+        self.engine = self.dungeon_engine
+        self.screen = pygame.display.set_mode((self.D_SCREEN_WIDTH, self.D_SCREEN_HEIGHT))
+        self.exit_x, self.exit_y = self.D_MAZE_WIDTH - 2, self.D_MAZE_HEIGHT - 2  
+        # generate(difficulty, min_room_size, max_room_size, room_attempts)
+        self.maze = self.dungeon_engine.generate(self.current_difficulty, self.ROOM_ATTEMPTS , self.MIN_ROOM_SIZE , self.MAX_ROOM_SIZE )
 
     def world_settings(self):
-        self.TILE_SIZE = 25                                         #size of 1 tile in game e.g player / wall
-        self.MAZE_WIDTH = 43                                        
-        self.MAZE_HEIGHT = 29
-        self.SCREEN_WIDTH = self.MAZE_WIDTH * self.TILE_SIZE
-        self.SCREEN_HEIGHT = (self.MAZE_HEIGHT * self.TILE_SIZE) + 40 
+        self.camera_type = 'world'
+        self.mode  = "maze"
+        self.engine = self.maze_engine
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
+        self.exit_x, self.exit_y = self.MAZE_WIDTH - 2, self.MAZE_HEIGHT - 2  
+        self.maze = self.maze_engine.generate(self.current_difficulty , 3 , 3 , 6)
     
     #handles drawing to the screen and displaying everything
     def world_pov(self , player  ):
@@ -151,8 +170,8 @@ class Settings ():
 
     def camera_pov (self , player ):
          # Center the camera on the player, then keep it inside the maze.
-        world_width = self.MAZE_WIDTH * self.TILE_SIZE
-        world_height = self.MAZE_HEIGHT * self.TILE_SIZE
+        world_width = self.MAZE_WIDTH * self.D_TILE_SIZE
+        world_height = self.MAZE_HEIGHT * self.D_TILE_SIZE
 
         camera_x = player.rect.centerx - self.VIEW_WIDTH // 2
         camera_y = player.rect.centery - self.VIEW_HEIGHT // 2
@@ -167,12 +186,22 @@ class Settings ():
         # Blit only the part of the cached maze visible through the camera.
         self.screen.blit(self.background_surface, (0, 0), camera_rect)
 
+
         # Convert the exit's world position to its screen position.
-        exit_rect = pygame.Rect( self.exit_x * self.TILE_SIZE - camera_x, self.exit_y * self.TILE_SIZE - camera_y, self.TILE_SIZE, self.TILE_SIZE, )
+        exit_rect = pygame.Rect( self.exit_x * self.D_TILE_SIZE - camera_x, self.exit_y * self.D_TILE_SIZE - camera_y, self.D_TILE_SIZE, self.D_TILE_SIZE, )
         pygame.draw.rect(self.screen, self.COLOR_EXIT, exit_rect)
+
+        
 
         # Convert the player's world position to its screen position.
         self.screen.blit( player.image, (player.rect.x - camera_x, player.rect.y - camera_y),)
+
+        for enemy in self.enemies:
+            if camera_rect.colliderect(enemy.rect):
+                self.screen.blit(
+                    enemy.image,
+                    (enemy.rect.x - camera_x, enemy.rect.y - camera_y),
+                )
 
         # Keep the HUD in place rather than making it scroll with the maze.
         pygame.draw.rect( self.screen, (30, 30, 30), (0, self.VIEW_HEIGHT, self.SCREEN_WIDTH, self.HUD_HEIGHT),)

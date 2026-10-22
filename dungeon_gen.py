@@ -5,9 +5,8 @@ class DungeonGenerator:
         # Force dimensions to be odd numbers for perfect block-wall alignment
         self.width = width if width % 2 != 0 else width + 1
         self.height = height if height % 2 != 0 else height + 1
-        self.hard_complexity = 4   # closer to 1 means fewer paths and longer hallway , closer to 6 more branching paths shorter hallway
 
-    def generate(self, difficulty , num_rooms , min_size , max_size  ):
+    def generate(self, difficulty , num_rooms , min_size , max_size , hard_complexity = 4  ):
         # Grid dimensions for the underlying mathematical Kruskal cells
         grid_w = self.width // 2
         grid_h = self.height // 2
@@ -90,7 +89,7 @@ class DungeonGenerator:
 
         # Apply Difficulty Tuning (Your original code)
         if difficulty == "hard":
-            walls.sort(key=lambda w: (w[0][0] + w[0][1]) % self.hard_complexity + random.random())
+            walls.sort(key=lambda w: (w[0][0] + w[0][1]) % hard_complexity + random.random())
         else:
             random.shuffle(walls)
 
@@ -151,6 +150,9 @@ class DungeonGenerator:
         # Guarantee entry and exit points remain clear (Your original code)
         matrix[1][1] = 0
         matrix[self.height - 2][self.width - 2] = 0
+
+        print(rooms )
+        print(room_by_cell)
 
         return matrix
     
