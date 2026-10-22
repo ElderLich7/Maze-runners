@@ -48,7 +48,14 @@ def main():
                     if ai_settings.mode == "maze":
                         game_controls.maze_controls( event , ai_settings )
                         ai_settings.maze = ai_settings.engine.generate(ai_settings.current_difficulty , random.randrange(0,5))
-                    
+
+                    else :
+                        game_controls.maze_controls( event , ai_settings )
+                        ai_settings.maze = ai_settings.dungeon_engine.generate(ai_settings.current_difficulty, ai_settings.ROOM_ATTEMPTS , ai_settings.MIN_ROOM_SIZE , ai_settings.MAX_ROOM_SIZE )
+                        enemies = EnenmyAI( 2 , ai_settings.D_TILE_SIZE ,enemy_frames )
+                        enemies.pick_initial_enemy_positions(ai_settings.maze)
+                        ai_settings.enemies = enemies.enemy_group
+
                 elif event.key in ( pygame.K_5 , pygame.K_6) :
                     if event.key == pygame.K_5:
 

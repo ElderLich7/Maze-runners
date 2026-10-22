@@ -139,7 +139,7 @@ class Settings ():
         self.engine = self.maze_engine
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
         self.exit_x, self.exit_y = self.MAZE_WIDTH - 2, self.MAZE_HEIGHT - 2  
-        self.maze = self.maze_engine.generate(self.current_difficulty , 3 , 3 , 6)
+        self.maze = self.maze_engine.generate(self.current_difficulty )
     
     #handles drawing to the screen and displaying everything
     def world_pov(self , player  ):
@@ -191,7 +191,7 @@ class Settings ():
         exit_rect = pygame.Rect( self.exit_x * self.D_TILE_SIZE - camera_x, self.exit_y * self.D_TILE_SIZE - camera_y, self.D_TILE_SIZE, self.D_TILE_SIZE, )
         pygame.draw.rect(self.screen, self.COLOR_EXIT, exit_rect)
 
-        
+
 
         # Convert the player's world position to its screen position.
         self.screen.blit( player.image, (player.rect.x - camera_x, player.rect.y - camera_y),)

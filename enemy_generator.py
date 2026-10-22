@@ -19,7 +19,7 @@ class NPC(pygame.sprite.Sprite , ExploringRandomWalk ):
         self.grid_x = grid_x
         self.grid_y = grid_y
         #cool down for player movement
-        self.MOVE_COOLDOWN = 300  
+        self.MOVE_COOLDOWN = 600  
         # Tracker for when the player last moved
         self.last_move_time = 0 
         self.creature = creature
@@ -112,8 +112,11 @@ class NPC(pygame.sprite.Sprite , ExploringRandomWalk ):
         # Relative movements: Up, Down, Left, Right
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
-    
-        current = self.history_stack[-1]
+        if self.history_stack:
+            current = self.history_stack[-1]
+        else :
+            self.history_stack = [(self.grid_x,self.grid_y)]
+            current = self.history_stack[-1]
         valid_moves = []
 
         # Check all 4 neighboring squares
@@ -121,7 +124,7 @@ class NPC(pygame.sprite.Sprite , ExploringRandomWalk ):
             next_x, next_y = current[0] + dx, current[1] + dy
             
             # Condition: Inside boundaries AND not a wall AND not visited yet
-            if (0 <= next_x < height and 0 <= next_y < width and maze[next_x][ next_y] == 0 and (next_x, next_y) not in self.visited):
+            if (0 <= next_x < width and 0 <= next_y < height and maze[next_y][ next_x] == 0 and (next_x, next_y) not in self.visited):
                     valid_moves.append((next_x, next_y))
 
         if valid_moves:
